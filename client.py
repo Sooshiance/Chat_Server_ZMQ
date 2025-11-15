@@ -132,3 +132,80 @@ class ChatClient(QMainWindow):
 
         # Initial group list refresh
         self.refresh_groups()
+
+    def refresh_groups(self):
+        self.send_command("refresh")
+
+    def send_command(self, action: str, group: str = ""):
+        msg = {
+            "type": "command",
+            "from": self.username,
+            "action": action,
+            "group": group,
+        }
+        self.pub.send_string(json.dumps(msg))
+
+    def create_group(self):
+        pass
+
+    def remove_group(self):
+        pass
+
+    def on_group_tab_changed(self, index: int):
+        pass
+
+    def update_member_list(self, group_name: str):
+        pass
+
+    def join_current_group(self):
+        pass
+
+    def leave_current_group(self):
+        pass
+
+    def send_group_message(self):
+        pass
+
+    def start_private_chat(self, item: Any):
+        pass
+
+    def send_private_message(self, from_user: str, to_user: str, message: str):
+        pass
+
+    def handle_incoming_message(self, msg: dict):
+        pass
+    
+    def update_group_list(self, group_names: list):
+        pass
+
+    def get_all_group_names(self):
+        pass
+
+    def find_tab_by_name(self, name: str):
+        pass
+
+    def closeEvent(self, event):
+        for group in list(self.joined_groups):
+            self.send_command("leave", group)
+        self.receiver.stop()
+        self.pub.close()
+        self.context.term()
+        event.accept()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    # Simple login dialog
+    username, ok = QInputDialog.getText(None, "Login", "Enter your username:")
+    if not ok or not username.strip():
+        sys.exit()
+
+    is_admin = (
+        username.strip().lower() == "admin"
+    )  # Simple check — you can improve this
+
+    client = ChatClient(username.strip(), is_admin)
+    client.show()
+
+    sys.exit(app.exec_())
