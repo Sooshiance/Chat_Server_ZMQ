@@ -111,3 +111,24 @@ class ChatClient(QMainWindow):
 
         # Middle: Group Tabs + Member List
         mid_layout = QHBoxLayout()
+
+        self.group_tabs = QTabWidget()
+        self.group_tabs.addTab(self.group_placeholder, "No Groups")
+        self.group_tabs.currentChanged.connect(self.on_group_tab_changed)
+        mid_layout.addWidget(self.group_tabs, 3)
+
+        main_layout.addLayout(mid_layout)
+
+        # Bottom: Message input + Send
+        bottom_layout = QHBoxLayout()
+        self.message_input = QLineEdit()
+        bottom_layout.addWidget(self.message_input)
+
+        self.send_btn = QPushButton("Send to Group")
+        self.send_btn.clicked.connect(self.send_group_message)
+        bottom_layout.addWidget(self.send_btn)
+
+        main_layout.addLayout(bottom_layout)
+
+        # Initial group list refresh
+        self.refresh_groups()
