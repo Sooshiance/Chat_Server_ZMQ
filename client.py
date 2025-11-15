@@ -71,3 +71,43 @@ class ChatClient(QMainWindow):
 
         self.init_ui()
         self.refresh_groups()
+
+    def init_ui(self) -> None:
+        self.setWindowTitle(
+            f"Chat Client - {self.username} ({'Admin' if self.is_admin else 'User'})"
+        )
+        self.setGeometry(100, 100, 800, 600)
+
+        # Add a placeholder for group names
+        self.group_placeholder = QTextEdit()
+        self.group_placeholder.setPlainText(
+            "No groups available. As an admin, you can create groups."
+            if self.is_admin
+            else "No groups available. Please wait for an admin to create groups."
+        )
+        self.group_placeholder.setReadOnly(True)
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        main_layout = QVBoxLayout(central)
+
+        # Top: User info + Admin buttons
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(QLabel(f"Logged in as: {self.username}"))
+        if self.is_admin:
+            self.create_group_btn = QPushButton("Create Group")
+            self.create_group_btn.clicked.connect(self.create_group)
+            top_layout.addWidget(self.create_group_btn)
+
+            self.remove_group_btn = QPushButton("Remove Group")
+            self.remove_group_btn.clicked.connect(self.remove_group)
+            top_layout.addWidget(self.remove_group_btn)
+
+            self.refresh_btn = QPushButton("Refresh Groups")
+            self.refresh_btn.clicked.connect(self.refresh_groups)
+            top_layout.addWidget(self.refresh_btn)
+
+        main_layout.addLayout(top_layout)
+
+        # Middle: Group Tabs + Member List
+        mid_layout = QHBoxLayout()
