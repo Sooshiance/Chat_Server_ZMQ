@@ -32,7 +32,7 @@ class ZMQReceiverThread(QThread):
         self.sub = self.context.socket(zmq.SUB)
         self.sub.connect(self.sub_addr)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, "")
-    
+
     def run(self):
         while True:
             try:
@@ -145,11 +145,18 @@ class ChatClient(QMainWindow):
         }
         self.pub.send_string(json.dumps(msg))
 
-    def create_group(self):
-        pass
+    def create_group(self) -> None:
+        group, ok = QInputDialog.getText(self, "Create Group", "Group name:")
+        if ok and group.strip():
+            self.send_command("create", group.strip())
 
-    def remove_group(self):
-        pass
+    def remove_group(self) -> None:
+        group, ok = QInputDialog.getText(self, "Remove Group", "Group name:")
+        if ok and group.strip():
+            if group.strip() in self.groups:
+                self.send_command("remove", group.strip())
+            else:
+                QMessageBox.warning(self, "Error", "Group does not exist.")
 
     def on_group_tab_changed(self, index: int):
         pass
@@ -174,7 +181,7 @@ class ChatClient(QMainWindow):
 
     def handle_incoming_message(self, msg: dict):
         pass
-    
+
     def update_group_list(self, group_names: list):
         pass
 
