@@ -68,6 +68,7 @@ class ChatClient(QMainWindow):
         )  # to provider PUB (for receiving)
         self.receiver.message_received.connect(self.handle_incoming_message)
         self.receiver.start()
+        self.member_list=[]
 
         self.init_ui()
         self.refresh_groups()
@@ -159,10 +160,20 @@ class ChatClient(QMainWindow):
                 QMessageBox.warning(self, "Error", "Group does not exist.")
 
     def on_group_tab_changed(self, index: int):
-        pass
+        if index >= 0:
+            group_name = self.group_tabs.tabText(index)
+            print(f"group name ============> {group_name}")
+            if group_name != "No Groups":
+                self.member_list.clear()
+                self.member_list.addItem("Join group to see members")
+            else:
+                self.update_member_list(group_name)
 
     def update_member_list(self, group_name: str):
-        pass
+        self.member_list.clear()
+        if group_name in self.groups:
+            for member in sorted(self.groups[group_name]):
+                self.member_list.addItem(member)
 
     def join_current_group(self):
         pass
