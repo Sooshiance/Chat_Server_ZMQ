@@ -176,13 +176,63 @@ class ChatClient(QMainWindow):
                 self.member_list.addItem(member)
 
     def join_current_group(self):
-        pass
+        current_index = self.group_tabs.currentIndex()
+        if current_index >= 0:
+            current = self.group_tabs.tabText(current_index)
+            if current and current != "No Groups":
+                if current not in self.joined_groups:
+                    self.send_command("join", current)
+                    # Update member list immediately after joining
+                    self.update_member_list(current)
+                else:
+                    QMessageBox.information(self, "Info", "Already joined this group.")
 
     def leave_current_group(self):
-        pass
+        current_index = self.group_tabs.currentIndex()
+        if current_index >= 0:
+            current = self.group_tabs.tabText(current_index)
+            if current in self.joined_groups:
+                self.send_command("leave", current)
+            else:
+                QMessageBox.information(self, "Info", "You haven't joined this group.")
 
     def send_group_message(self):
-        pass
+        current_index = self.group_tabs.currentIndex()
+        if current_index < 0:
+            QMessageBox.warning(self, "Error", "Select a group first.")
+            return
+
+        current = self.group_tabs.tabText(current_index)
+        if not current or current == "No Groups":
+            QMessageBox.warning(
+                self,
+                "Error",
+                "Select a group first.",
+            )
+            return
+
+        if current not in self.joined_groups:
+            QMessageBox.warning(
+                self,
+                "Error",
+                "You must join the group to send messages.",
+            )
+            return
+
+        msg_text = self.message_input.text().strip()
+        if msg_text:
+            msg = {
+                "type": "message",
+                "from": self.username,
+                "group": current,
+                "data": msg_text,
+            }
+            self.pub.send_string(json.dumps(msg))
+            # Echo locally
+            tab = self.group_tabs.currentWidget()
+            if tab:
+                tab.append(f"You: {msg_text}")
+            self.message_input.clear()
 
     def start_private_chat(self, item: Any):
         pass
