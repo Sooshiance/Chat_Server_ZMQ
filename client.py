@@ -235,10 +235,27 @@ class ChatClient(QMainWindow):
             self.message_input.clear()
 
     def start_private_chat(self, item: Any):
-        pass
+        target = item.text()
+        if target == self.username:
+            # QMessageBox.warning(self, "Error", "Cannot chat with yourself.")
+            return
+
+        if target not in self.private_windows:
+            win = PrivateChatWindow(self.username, target)
+            win.send_message.connect(self.send_private_message)
+            win.show()
+            self.private_windows[target] = win
+        else:
+            self.private_windows[target].activateWindow()
 
     def send_private_message(self, from_user: str, to_user: str, message: str):
-        pass
+        msg = {
+            "type": "message",
+            "from": from_user,
+            "to": to_user,
+            "data": message,
+        }
+        self.pub.send_string(json.dumps(msg))
 
     def handle_incoming_message(self, msg: dict):
         pass
