@@ -258,10 +258,108 @@ class ChatClient(QMainWindow):
         self.pub.send_string(json.dumps(msg))
 
     def handle_incoming_message(self, msg: dict):
-        pass
+        mtype = msg.get("type")
+
+        if mtype == "event":
+            if "to" in msg and msg["to"] != self.username:
+                return  # Not for us
+
+            # Handle group list refresh
+            if "groups" in msg:
+                groups_data = msg.get("groups", {})
+                if isinstance(groups_data, dict):
+                    self.groups = {
+                        g: set(members) for g, members in groups_data.items()
+                    }
+                    group_names = list(self.groups.keys())
+                    self.update_group_list(group_names)
+                return  # No need to process further
+
+            # Handle text events (created, joined, left, etc.)
+            data = msg.get("data", "")
+            if not data:
+                return
+
+            if "created" in data or "removed" in data:
+                self.refresh_groups()  # Re-fetch updated list
+                QMessageBox.information(self, "Event", data)
+            elif "joined" in data or "left" in data:
+                parts = data.split()
+                if len(parts) >= 3:
+                    user = parts[0]
+                    group = parts[2].rstrip(".")
+                    if group in self.groups:
+                        if "joined" in data:
+                            self.groups[group].add(user)
+                            if user == self.username:
+                                self.joined_groups.add(group)
+                        elif "left" in data:
+                            self.groups[group].discard(user)
+                            if user == self.username:
+                                self.joined_groups.discard(group)
+                        # Update member list if this is the current group
+                        current_index = self.group_tabs.currentIndex()
+                        if current_index >= 0:
+                            current = self.group_tabs.tabText(current_index)
+                            if current == group:
+                                self.update_member_list(group)
+                QMessageBox.information(self, "Event", data)
+
+        elif mtype == "message":
+            if "to" in msg:  # Private message
+                sender = msg["from"]
+                content = msg["data"]
+
+                # Check if we already have a window for this sender
+                if sender not in self.private_windows:
+                    # Create new window if it doesn't exist
+                    win = PrivateChatWindow(self.username, sender)
+                    win.send_message.connect(self.send_private_message)
+                    win.show()
+                    self.private_windows[sender] = win
+
+                # Deliver message to existing window
+                self.private_windows[sender].receive_message(sender, content)
+            else:  # Group message
+                group = msg.get("group", "")
+                sender = msg.get("from", "")
+                content = msg.get("data", "")
+                if group in self.get_all_group_names():
+                    tab = self.find_tab_by_name(group)
+                    if tab:
+                        tab.append(f"{sender}: {content}")
 
     def update_group_list(self, group_names: list):
-        pass
+        current_index = self.group_tabs.currentIndex()
+
+        # Rebuild tabs
+        self.group_tabs.clear()
+
+        if group_names:
+            for name in sorted(group_names):
+                chat_display = QTextEdit()
+                chat_display.setReadOnly(True)
+                self.group_tabs.addTab(chat_display, name)
+        else:
+            # Add placeholder if no groups
+            self.group_tabs.addTab(self.group_placeholder, "No Groups")
+
+        # Restore previous tab selection if possible
+        if current_index >= 0 and current_index < self.group_tabs.count():
+            self.group_tabs.setCurrentIndex(current_index)
+
+        # Trigger UI update
+        self.group_tabs.update()
+
+        # Trigger member list update
+        if self.group_tabs.count() > 0:
+            current_index = self.group_tabs.currentIndex()
+            if current_index >= 0:
+                current = self.group_tabs.tabText(current_index)
+                if current != "No Groups":
+                    self.update_member_list(current)
+                else:
+                    self.member_list.clear()
 
     def get_all_group_names(self):
         pass
