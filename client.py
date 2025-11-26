@@ -362,10 +362,17 @@ class ChatClient(QMainWindow):
                     self.member_list.clear()
 
     def get_all_group_names(self):
-        pass
+        return [
+            self.group_tabs.tabText(i)
+            for i in range(self.group_tabs.count())
+            if self.group_tabs.tabText(i) != "No Groups"
+        ]
 
     def find_tab_by_name(self, name: str):
-        pass
+        for i in range(self.group_tabs.count()):
+            if self.group_tabs.tabText(i) == name:
+                return self.group_tabs.widget(i)
+        return None
 
     def closeEvent(self, event):
         for group in list(self.joined_groups):
